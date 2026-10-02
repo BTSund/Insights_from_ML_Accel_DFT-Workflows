@@ -1,0 +1,63 @@
+#############################################
+# Specify high-level simulation style
+##############################################
+
+units        real                      # Specify units to use
+newton       on
+atom_style   atomic                      # Only store info on atom coords and type - no bonded info
+atom_modify  sort 0 0.0                # Maintain atom ordering when printing information
+atom_modify  map array                 # Also needed to maintain ordering
+neighbor     2.0 bin                   # Specify neighborlist parameters
+neigh_modify delay 0 every 1 check yes # More neighborlist parameters
+
+boundary p p p
+read_data    ./data.lammps
+pair_style  chimesFF 
+pair_coeff  * *  ../../../params.txt.reduced
+
+##############################################
+# Specify the requested output
+##############################################
+#
+velocity all create 1500.0 2217 rot yes dist gaussian
+ 
+fix             1 all npt temp 1500.0 1500.0 100 aniso 49346.16 49346.16 500
+
+thermo_style    custom step lx ly lz pxx pyy pzz pe ke etotal vol press temp 
+thermo          1
+
+timestep 0.5
+restart         50 thermalize.a.restart thermalize.b.restart # Print restart every 50 steps
+dump            1 all custom 100 traj.lammpstrj id element xu yu zu
+thermo 10
+# Run
+run 10000
+write_data      Thermalization_1.data
+unfix 1
+region 1 block 0 48.8823637761 INF INF  INF INF
+group 2 region 1
+group outside2 subtract all 2
+
+velocity 2 create 3000.0 2217 rot yes dist gaussian
+fix fix_nvt 2 nvt temp 3000.0 3000.0 50
+fix freeze_outside outside2 setforce 0.0 0.0 0.0
+
+run 10000
+write_data      Half_melted.data 
+unfix fix_nvt
+unfix freeze_outside
+
+velocity all create 1500.0 2218 rot yes dist gaussian
+fix        3 all npt temp 1500.0 1500.0 100 aniso 49346.16 49346.16 500
+run 10000
+write_data      Thermilization_2.data 
+unfix 3
+
+fix        4 all nph aniso 49346.16 49346.16 500
+
+run 200000
+
+write_data      final_structure.data   # Output relaxed structure
+# Post-run
+# Output relaxed structure
+
