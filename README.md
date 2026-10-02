@@ -7,8 +7,8 @@ to build a P–T phase diagram:
 
 | Folder | What it computes | Main outputs |
 |---|---|---|
-| [`Deep_Blue_TI/`](Deep_Blue_TI/README.md) | Finite-temperature Gibbs free energies by Frenkel–Ladd thermodynamic integration (TI) to an Einstein crystal | ΔG(P) curves per phase, solid–solid transition pressures with uncertainties |
-| [`Deep_Blue_NPH/`](Deep_Blue_NPH/README.md) | Melting points by solid–liquid two-phase coexistence (NPH) | Coexistence temperature at a given pressure, plus a q̄₆ order-parameter profile across the interface |
+| [`Example_TI/`](Example_TI/README.md) | Finite-temperature Gibbs free energies by Frenkel–Ladd thermodynamic integration (TI) to an Einstein crystal | ΔG(P) curves per phase, solid–solid transition pressures with uncertainties |
+| [`Example_NPH/`](Example_NPH/README.md) | Melting points by solid–liquid two-phase coexistence (NPH) | Coexistence temperature at a given pressure, plus a q̄₆ order-parameter profile across the interface |
 
 All simulations use `units real` (energies in kcal/mol, pressures in atm,
 lengths in Å, time in fs).
@@ -51,14 +51,14 @@ path before running.
 
 ```
 .
-├── Deep_Blue_TI/
+├── Example_TI/
 │   ├── configs/            # LAMMPS data files, one per phase, diamond example provided
 │   ├── starterpack/        # lmp.in (NPT box averaging), TI.in (Frenkel–Ladd TI)
 │   ├── run_TI.sh           # builds the T / replica / phase / pressure directory tree
 │   ├── run_sbatch.sh       # submits one SLURM job per phase per temperature
 │   ├── sbatch.cmd          # SLURM job template
 │   └── Spline_uncertainty.py  # free-energy analysis, transitions, plots
-├── Deep_Blue_NPH/
+├── Example_NPH/
 │   ├── data.lammps         # 5184-atom diamond Si supercell (18×6×6 conventional cells)
 │   ├── lmp.in              # equilibrate → half-melt → NPH coexistence
 │   └── q.py                # q̄₆ order-parameter profile along the long axis
