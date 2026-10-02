@@ -1,0 +1,65 @@
+#############################################
+# Specify high-level simulation style
+##############################################
+
+#############################################
+# Specify high-level simulation style
+##############################################
+
+units        real                      # Specify units to use
+newton       on
+atom_style   atomic                      # Only store info on atom coords and type - no bonded info
+atom_modify  sort 0 0.0                # Maintain atom ordering when printing information
+atom_modify  map array                 # Also needed to maintain ordering
+neighbor     2.0 bin                   # Specify neighborlist parameters
+neigh_modify delay 0 every 1 check yes # More neighborlist parameters
+
+box tilt large
+boundary p p p
+read_data    ./data.lammps
+pair_style  chimesFF 
+pair_coeff  * *  ../../../../../../params.txt.reduced
+
+
+##############################################
+# Specify the requested output
+##############################################
+
+dump            1 all custom 1 traj.NVT.lammpstrj id element xu yu zu
+dump_modify 1 element Si sort id
+
+
+thermo_style    custom step pxx pyy pzz pe ke etotal press temp vol
+thermo          1
+# Define the NpT ensemble for 1000 K and 10 GPa (converted to atm)
+velocity all create set_temp rand_1 rot yes dist gaussian
+fix npt all npt temp set_temp set_temp 100 aniso set_press set_press 1000
+
+# Set up variables to track box dimensions
+variable lx equal lx
+variable ly equal ly
+variable lz equal lz
+variable xy equal xy
+variable xz equal xz
+variable yz equal yz
+
+# Compute average box dimensions over the simulation
+fix aves all ave/time 1 2500 2500 v_lx v_ly v_lz v_xy v_xz v_yz
+
+# Thermodynamic output settings
+thermo_style custom step lx ly lz
+thermo 10
+
+# Run the NpT simulation for 10000 steps
+run 5000
+
+# Unfix the NpT and averaging fixes to stop them
+
+# Write average box dimensions to a file
+variable av_lx equal f_aves[1]
+variable av_ly equal f_aves[2]
+variable av_lz equal f_aves[3]
+variable av_xy equal f_aves[4]
+variable av_xz equal f_aves[5]
+variable av_yz equal f_aves[6]
+print "AVERAGES ${av_lx} ${av_ly} ${av_lz} ${av_xy} ${av_xz} ${av_yz}" file averages.txt

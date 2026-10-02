@@ -1,0 +1,56 @@
+#############################################
+# Specify high-level simulation style
+##############################################
+
+
+units        real                      # Specify units to use
+newton       on
+atom_style   atomic                      # Only store info on atom coords and type - no bonded info
+atom_modify  sort 0 0.0                # Maintain atom ordering when printing information
+atom_modify  map array                 # Also needed to maintain ordering
+neighbor     2.0 bin                   # Specify neighborlist parameters
+neigh_modify delay 0 every 1 check yes # More neighborlist parameters
+
+box tilt large
+boundary p p p
+read_data    ./data.lammps
+pair_style  chimesFF 
+pair_coeff  * *  ../../../../../../params.txt.reduced
+
+# Scale the simulation box to the averaged dimensions
+change_box all x final 0 set_lx y final 0 set_ly z final 0 set_lz xy final set_xy xz final set_xz yz final set_yz remap
+
+dump            1 all custom 10 traj.lammpstrj id element xu yu zu
+dump_modify 1 element Si sort id
+
+
+fix               f1 all nve
+fix               f3 all ti/spring 900 5000 10000 function 2   # 6.893419 should match what was printed above
+fix               f4 all langevin set_temp.0 set_temp.0 100 1000 zero yes
+thermo_style    custom step pxx pyy pzz pe ke etotal press temp vol
+thermo          1
+
+timestep 1.0
+
+variable    step equal step
+variable    tmp1 equal f_f3
+variable    tmp2 equal pe
+
+variable          lambda  equal f_f3[1]
+variable          dlambda equal f_f3[2]
+
+
+velocity all create set_temp.0 rand_2 rot yes dist gaussian
+run             9999
+fix             f5 all print 1 "${step} ${tmp1} ${tmp2} ${lambda} ${dlambda}" & 
+                screen no file forward_fl.dat &
+                title '# step E_EC E_ChIMES dU lambda dlambda'
+run               5001
+unfix             f5
+run               9999
+fix             f5 all print 1 "${step} ${tmp1} ${tmp2} ${lambda} ${dlambda}" & 
+                screen no file backward_fl.dat &
+                title '# step E_EC E_ChIMES dU lambda dlambda'
+run               5001
+unfix             f5
+
